@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,8 +24,6 @@ type WebView struct {
 }
 
 func NewWebView() *WebView {
-	fs := http.FileServer(http.Dir("web"))
-
 	wv := &WebView{}
 	wv.server = &http.Server{
 		Addr: ":8421",
@@ -41,8 +40,20 @@ func NewWebView() *WebView {
 				w.WriteHeader(200)
 				w.Write([]byte(wv.source))
 				return
+			} else if page, ok := webSource[r.URL.Path]; ok {
+				// TODO: store content-type
+				if r.URL.Path == "" {
+					w.Header().Set("Content-Type", "text/html")
+				} else if strings.HasSuffix(r.URL.Path, ".js") {
+					w.Header().Set("Content-Type", "text/javascript")
+				}
+				w.WriteHeader(200)
+				w.Write([]byte(page))
+			} else {
+				w.Header().Set("Content-Type", "text/html")
+				w.WriteHeader(404)
+				w.Write([]byte("<!DOCTYPE html><p>Not found"))
 			}
-			fs.ServeHTTP(w, r)
 		}),
 	}
 	log.Println("Starting webserver on port 8421")

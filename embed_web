@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from json import dumps
+from os import listdir
+from subprocess import check_call
+
+with open('web_source.go', 'w') as fp:
+    print('package main', file=fp)
+    print('// Automatically generated, do not edit', file=fp)
+    print('var webSource = map[string]string{', file=fp)
+    for fname in listdir('web'):
+        s = dumps(open('web/' + fname).read()).rstrip()
+        path = '' if fname == 'index.html' else fname
+        print('\t"/', path, '": ', s, ',', sep='', file=fp)
+    print('}', file=fp)
+
+check_call(['go', 'fmt', 'web_source.go'])
